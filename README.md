@@ -17,7 +17,7 @@ iNaturalist es una de las plataformas digitales globales de ciencia comunitaria 
 
 ## Programa tentativo
 
-### Día 1 (1 hora 30 minutos: martes de 8:30 a 10)
+### Día 1 (martes de 8:30 a 10)
 
 | **Bloque** 	| **Actividad** 	| **Tiempo estimado** 	|
 |---	|---	|---	|
@@ -27,7 +27,7 @@ iNaturalist es una de las plataformas digitales globales de ciencia comunitaria 
 Ejemplo Gran Biobúsqueda del Sur (GBS) 2023 	| 20 minutos 	|
 | Práctica: R 	| Análisis de datos en R, con RStudio y tidyverse: Lectura de datos (readr). Generación de tablas de resúmenes de datos (dplyr, knitr) 	| 30 minutos 	|
 
-### Día 2 (1 hora 30 minutos: miércoles de 8:30 a 10)
+### Día 2 (miércoles de 8:30 a 10)
 
 | **Bloque** 	| **Actividad** 	| **Tiempo estimado** 	|
 |---	|---	|---	|
@@ -35,7 +35,7 @@ Ejemplo Gran Biobúsqueda del Sur (GBS) 2023 	| 20 minutos 	|
 | Elección Tema Hackathon 	| Armado de grupos (3 o 4 personas) y elección de tema (preguntas de investigación) para la Hackathon 	| 15 minutos 	|
 | Práctica: Hackathon 	| Arranque Hackathon en grupos sobre los datos generados durante la Gran Biobúsqueda del Sur 2023 	| 45 minutos 	|
 
-### Día 3 (2 horas: jueves de 8 a 10)
+### Día 3 (jueves de 8 a 10)
 
 | **Bloque** 	| **Actividad** 	| **Tiempo estimado** 	|
 |---	|---	|---	|
