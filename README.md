@@ -23,8 +23,7 @@ iNaturalist es una de las plataformas digitales globales de ciencia comunitaria 
 |---	|---	|---	|
 | Introducciones 	| Presentación de docentes y estudiantes (menti) 	| 10 minutos 	|
 | Introducción teórica 	| Datos abiertos, ciencia abierta y ciencia comunitaria. NaturalistaUY, el portal de iNaturalist para Uruguay. ¿Qué es una Hackathon? 	| 30 minutos 	|
-| Práctica: NaturalistaUY 	| Cómo explorar datos en la plataforma: Búsquedas por taxones, lugares, proyectos. Cómo descargar datos de la plataforma
-Ejemplo Gran Biobúsqueda del Sur (GBS) 2023 	| 20 minutos 	|
+| Práctica: NaturalistaUY 	| Cómo explorar datos en la plataforma: Búsquedas por taxones, lugares, proyectos. Cómo descargar datos de la plataforma: Ejemplo Gran Biobúsqueda del Sur (GBS) 2023 	| 20 minutos 	|
 | Práctica: R 	| Análisis de datos en R, con RStudio y tidyverse: Lectura de datos (readr). Generación de tablas de resúmenes de datos (dplyr, knitr) 	| 30 minutos 	|
 
 ### Día 2 (miércoles de 8:30 a 10)
