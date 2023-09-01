@@ -1,4 +1,4 @@
-# Hackathon: Ciencia comunitaria y NaturalistaUY
+# Ciencia comunitaria y NaturalistaUY
 
 <img src="img/hackathon_sticker_v.png">
 
