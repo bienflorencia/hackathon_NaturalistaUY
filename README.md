@@ -1,6 +1,6 @@
-<img src="img/hackathon_sticker_v.png">
-
 # Ciencia comunitaria y NaturalistaUY
+
+<img src="img/hackathon_sticker_v.png">
 
 Esta Hackathon es un minicurso del [Congreso Uruguayo de Zoología](https://cuz.szu.org.uy), a desarrollarse en Montevideo entre el 3 y el 8 de diciembre 2023.
 
