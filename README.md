@@ -5,7 +5,7 @@
 
 Esta Hackathon es un minicurso del [Congreso Uruguayo de Zoología](https://cuz.szu.org.uy), a desarrollarse en Montevideo entre el 3 y el 8 de diciembre 2023.
 
-  - **Docentes**: Florencia Grattarola (responsable), Lucía Rodríguez-Trictot y Juan Manuel Barreneche.  
+  - **Docentes**: Florencia Grattarola (responsable), Lucía Rodríguez-Tricot y Juan Manuel Barreneche.  
   - **Dirigido a**: interesados/as en el análisis de datos de biodiversidad con conocimiento básico de R.  
   - **Cupo**: 20 personas.  
   - **Requisitos**: laptop con [R y RStudio instalado](https://datacarpentry.org/R-ecology-lesson/index.html#install-r-and-rstudio).  
