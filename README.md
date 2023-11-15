@@ -5,7 +5,7 @@
 
 Esta Hackathon es un minicurso del [Congreso Uruguayo de Zoología](https://cuz.szu.org.uy), a desarrollarse en Montevideo entre el 3 y el 8 de diciembre 2023.
 
-  - **Docentes**: Florencia Grattarola (responsable), Lucía Rodríguez-Trictot y Juan Manuel Barreneche.  
+  - **Docentes**: Florencia Grattarola (responsable), Lucía Rodríguez-Tricot y Juan Manuel Barreneche.  
   - **Dirigido a**: interesados/as en el análisis de datos de biodiversidad con conocimiento básico de R.  
   - **Cupo**: 20 personas.  
   - **Requisitos**: laptop con [R y RStudio instalado](https://datacarpentry.org/R-ecology-lesson/index.html#install-r-and-rstudio).  
@@ -35,7 +35,7 @@ iNaturalist es una de las plataformas digitales globales de ciencia comunitaria 
 |---	|---	|---	|
 | Práctica: R 	| Continuación: Generación de figuras (ggplot). Visualización de datos espaciales (sf, tmap) 	| 30 minutos 	|
 | Elección Tema Hackathon 	| Armado de grupos (3 o 4 personas) y elección de tema (preguntas de investigación) para la Hackathon 	| 15 minutos 	|
-| Práctica: Hackathon 	| Arranque Hackathon en grupos sobre los datos generados durante la Gran Biobúsqueda del Sur 2023 	| 45 minutos 	|
+| Práctica: Hackathon 	| Inicio de la Hackathon en grupos sobre los datos generados durante la Gran Biobúsqueda del Sur 2023 	| 45 minutos 	|
 
 ### Día 3 (jueves de 8 a 10)
 
