@@ -35,7 +35,7 @@ iNaturalist es una de las plataformas digitales globales de ciencia comunitaria 
 |---	|---	|---	|
 | Práctica: R 	| Continuación: Generación de figuras (ggplot). Visualización de datos espaciales (sf, tmap) 	| 30 minutos 	|
 | Elección Tema Hackathon 	| Armado de grupos (3 o 4 personas) y elección de tema (preguntas de investigación) para la Hackathon 	| 15 minutos 	|
-| Práctica: Hackathon 	| Arranque Hackathon en grupos sobre los datos generados durante la Gran Biobúsqueda del Sur 2023 	| 45 minutos 	|
+| Práctica: Hackathon 	| Inicio de la Hackathon en grupos sobre los datos generados durante la Gran Biobúsqueda del Sur 2023 	| 45 minutos 	|
 
 ### Día 3 (jueves de 8 a 10)
 
