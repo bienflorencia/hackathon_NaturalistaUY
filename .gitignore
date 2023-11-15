@@ -39,9 +39,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
-
 # translation temp files
 po/*~
 
@@ -51,3 +48,7 @@ rsconnect/
 # macOS
 .DS_Store
 /.quarto/
+
+# ignored repo
+docs/clases
+!docs/materiales/*
