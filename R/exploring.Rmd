@@ -1,0 +1,37 @@
+---
+title: "Reporte Centurión"
+author: "Juan"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Carga de datos
+
+```{r data}
+d <- read_csv(
+  "data/observations-376080.csv.zip",
+  col_types = cols(
+    observed_on_string = col_skip(),
+    observed_on = col_skip(),
+    time_observed_at = col_datetime(format = "%Y-%m-%d %H:%M:%S UTC"),
+    image_url = col_skip(), sound_url = col_skip()
+  )
+)
+```
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
