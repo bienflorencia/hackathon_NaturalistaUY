@@ -1,0 +1,334 @@
+---
+title: 'Ciencia abierta, datos abiertos y ciencia comunitaria'
+subtitle: 'Hackathon NaturalistaUY CUZ 2023'
+date: 2023-12-05
+author: 'Florencia Grattarola'
+institute: ''
+format: 
+  revealjs:
+    self-contained: true
+    logo: 'img/hackathon_sticker.png'
+    auto-stretch: false
+    code-copy: true
+    code-tools: true
+    enter-title-slide: false
+    theme: [assets/monash.scss]
+    controls: true
+    width: 1280
+    height: 720
+    css: [assets/syntax-highlight.css, assets/custom.css, assets/pacman.css]
+    highlight-style: github
+    #preview-links: true
+editor: source
+---
+
+## ¿Qué vamos a ver en esta intro?
+
+::: incremental
+1.  Ciencia abierta
+2.  Datos abiertos
+3.  Ciencia comunitaria
+4.  NaturalistaUY
+5.  ¿Qué es una Hackathon?
+6.  Agenda de la Hackathon de NaturalistaUY
+:::
+
+# Ciencia abierta {background-color="#74ac00"}
+
+## 1. Ciencia abierta
+
+### Una definición
+
+> "..un constructo inclusivo que combina diversos movimientos y prácticas **con el fin de que los conocimientos científicos multilingües estén abiertamente disponibles y sean accesibles para todos, así como reutilizables por todos**, se incrementen las colaboraciones científicas y el intercambio de información en beneficio de la ciencia y la sociedad, y se abran los procesos de creación, evaluación y comunicación de los conocimientos científicos a los agentes sociales más allá de la comunidad científica tradicional".
+
+::: aside
+[Recomendación de la UNESCO sobre la Ciencia Abierta (2021)](https://unesdoc.unesco.org/ark:/48223/pf0000379949_spa)
+:::
+
+---
+
+## 1. Ciencia abierta
+
+::: columns
+::: {.column width="50%"}
+::: incremental
+-   La recomendación establece cuatro pilares clave: conocimiento, infraestructuras, participación y diálogo con otros sistemas de conocimiento.
+
+-   América Latina es pionera en publicaciones de acceso abierto (diamante), sin embargo, el acceso abierto a datos de investigación es aún poco común.
+:::
+:::
+
+::: {.column width="50%"}
+![](img/ciencia_abierta_unesco.png)
+:::
+:::
+
+::: notes
+Speaker notes go here.
+:::
+
+---
+
+# Datos abiertos {background-color="#74ac00"}
+
+## 2. Datos abiertos
+
+::: incremental
+-   Los **datos abiertos** son aquellos a los que cualquier persona es libre de acceder, usar, modificar y compartir, estando sujeto a lo sumo a medidas que preserven su autoría y su apertura ([Open Knowledge Foundation](https://opendefinition.org/od/2.1/es/)).
+
+<br>
+
+![](http://opendefinition.org/assets.okfn.org/images/ok_buttons/od_80x15_blue.png){.centre top="200" height="50"}
+:::
+
+---
+
+## 2. Datos abiertos
+
+::: incremental
+-   En el marco de la **investigación**, los datos son la evidencia más comúnmente aceptada por la comunidad académica específica como necesaria para apoyar científica y técnicamente la investigación.
+
+-   Se generan como parte de actividades de investigación como experimentos, mediciones, encuestas, entrevistas, observaciones, etc. Y pueden incluir bases de datos, notas de campo, bitácoras, textos, ilustraciones, fotografías, sonidos, código y programas informáticos, entre otros.\
+:::
+
+---
+
+## 2. Datos abiertos
+
+::: incremental
+-   En un marco de **ciencia abierta**, la publicación de los datos recolectados o generados durante la investigación contribuye a que el proceso de investigación sea más transparente y reproducible. Y permite que otros/as puedan entender mejor los métodos, verificar o contrastar los resultados y reutilizar los datos para otros fines.\
+:::
+
+---
+
+## 2. Datos abiertos
+
+### ¿Cuál es la situación en Uruguay?
+
+::: incremental
+-   La disponibilidad de datos abiertos de biodiversidad en Uruguay es **una de las más bajas de la región** [([Grattarola et al 2019](https://doi.org/10.3897/BDJ.7.e36226))]{.font-aside}.
+
+-   Esto se debe en gran parte a que las fuentes públicas gubernamentales y académicas de información primaria sobre biodiversidad en Uruguay no son de acceso abierto (museos, herbarios, facultades, institutos de investigación, ministerio de ambiente, etc.).\
+:::
+
+---
+
+## 2. Datos abiertos
+
+Para comenzar a revertir esta situación en 2018 se crea [Biodiversidata](https://biodiversidata.org), el Consorcio de Datos de Biodiversidad del Uruguay.
+
+<br> <br>
+
+[**biodiversidata.org**](https://biodiversidata.org){.font-big}
+
+---
+
+## 2. Datos abiertos
+
+![](img/biodiversidata_bn.png){.centre top="200" height="200"}
+
+**Biodiversidata** es un proyecto colaborativo que busca mejorar el conocimiento sobre la biodiversidad en el Uruguay a través de la disponibilización de datos abiertos para su uso en la investigación científica, la educación ambiental y la toma de decisiones basadas en evidencia.
+
+---
+
+## 2. Datos abiertos
+
+![](img/biodiversidata_bn.png){.centre top="200" height="200"}
+
+**Biodiversidata** facilita la recopilación, estandarización y publicación de datos de biodiversidad derivados de la investigación científica. También promueve iniciativas de ciencia comunitaria y la generación de datos de calidad por parte de personas no científicas.
+
+---
+
+## 2. Datos abiertos
+
+![](img/biodiversidata_bn.png){.centre top="200" height="200"}
+
+A partir de los datos generados, **Biodiversidata** además busca responder preguntas de investigación en el país y la región de cara a abordar los desafíos globales de la pérdida de la biodiversidad y la degradación del ambiente.
+
+# Ciencia comunitaria {background-color="#74ac00"}
+
+## 3. Ciencia comunitaria
+
+::: incremental
+-   En América Latina existen más de 30 términos para nombrar experiencias de "**ciencia ciudadana**", como por ejemplo investigación acción, investigación acción participativa, investigación participativa, investigación colaborativa, monitoreo participativo, mapeo participativo, monitoreo comunitario, ciencia indígena, ciencia campesina, entre otros.
+
+-   Entonces, ¿por qué *decidimos* hablar de **ciencia comunitaria** y no de **ciencia ciudadana**?
+:::
+
+---
+
+## 3. Ciencia comunitaria
+
+::: incremental
+-   La ciencia ciudadana más "*clásica*" generalmente involucra a personas locales únicamente para la recolección de datos mientras el resto de las actividades son realizadas por científicxs.
+
+-   Casos como los del monitoreo de base local suelen hacerse en áreas en las que las comunidades tienen un estrecho vínculo con su biodiversidad y donde las personas locales suelen tener un rol central en el diseño y la toma de decisiones [([Danielsen et al., 2021](https://doi.org/10.1093/biosci/biab021))]{.font-aside}.\
+:::
+
+---
+
+## 3. Ciencia comunitaria
+
+::: incremental
+-   Desde Biodiversidata y JULANA, generamos nuestra propia definición
+:::
+
+---
+
+## 3. Ciencia comunitaria
+
+-   Desde Biodiversidata y JULANA, generamos nuestra propia definición
+
+> "Entendemos a la ciencia comunitaria como el proceso colaborativo de investigación en el que una comunidad trabaja junta para crear oportunidades de aprendizaje y generar nuevos conocimientos. Este proceso incluye la recolección, análisis e interpretación de datos, y se guía por principios éticos que enfatizan la consideración de las expectativas y necesidades de todas las personas involucradas, así como el reconocimiento del trabajo de cada una de las partes." (*in prep*).
+
+---
+
+# NaturalistaUY {background-color="#74ac00"}
+
+## 4. NaturalistaUY
+
+![](img/inaturalist.png){.centre}
+
+[iNaturalist](https://www.inaturalist.org) es una de las plataformas globales de ciencia comunitaria más importantes del mundo que tiene dos objetivos principales, acercar a las personas a la naturaleza y recolectar datos abiertos y de calidad sobre la biodiversidad.
+
+
+---
+
+## 4. NaturalistaUY
+
+![](img/naturalistauy.png){.centre}
+
+[NaturalistaUY](https://www.naturalista.uy) es nuestro portal nacional en Uruguay. Fue lanzado oficialmente en diciembre del 2021, pero usuarixs de Uruguay ya cargaban registros a iNat desde antes.
+
+---
+
+## 4. NaturalistaUY
+
+::: columns
+::: {.column width="60%"}
+La creación de NaturalistaUY se da en el marco del trabajo de **Biodiversidata** con la premisa de que la información sobre biodiversidad no sólo es limitada para la investigación científica si no también para las personas y comunidades que habitan los territorios.
+:::
+
+::: {.column width="40%"}
+![](img/biodiversidata_vertical.png){.centre}
+:::
+:::
+
+---
+
+## 4. NaturalistaUY
+
+::: columns
+::: {.column width="60%"}
+NaturalistaUY es también impulsada en colaboración con [JULANA](https://julana.org/), una asociación civil de educación ambiental que tiene entre sus objetivos visualizar las voces y los saberes de las comunidades impactadas por cambios ambientales, propiciando el debate, democratizando la información y buscando disminuir la brecha de desigualdad de poder desde el abordaje de la Justicia Ambiental.
+:::
+
+::: {.column width="40%"}
+![](img/JULANA_vertical.png){.centre}
+:::
+:::
+
+---
+
+## 4. NaturalistaUY
+
+::: incremental
+-   La articulación entre Biodiversidata y JULANA para la introducción de NaturalistaUY en Uruguay, nos pone en una situación privilegiada de poder enmarcar de qué forma queremos promover su uso.
+
+-   Nuestro objetivo es que sea en un marco de ciencia comunitaria :)
+:::
+
+---
+
+## 4. NaturalistaUY
+
+### ¿Cómo funciona?
+
+::: incremental
+-   NaturalistaUY permite a sus usuarios aportar observaciones de cualquier organismo vivo, o rastros del mismo, junto con metadatos espacio-temporales asociados (información sobre la localización y fecha del registro).
+
+-   Cuando una persona carga su registro, la plataforma le brinda una sugerencia automatizada sobre la posible identificación taxonómica del animal, planta u hongo que está siendo observado. Las identificaciones son luego verificadas por la comunidad de usuarios en NaturalistaUY llegando así a una "ID de la comunidad".
+
+:::
+
+
+---
+
+## 4. NaturalistaUY
+
+### ¿Cómo funciona?
+
+::: incremental
+-   Una observación luego se considera con "Grado de Investigación" cuando cumple con los criterios de calidad de los metadatos del sitio y tiene dos o más identificaciones sugeridas, más de dos tercios de las cuales coinciden a nivel de especie.
+
+-   La comunidad en línea de esta red social que colabora con identificaciones y con la curaduría de los datos está compuesta de personas de Uruguay, pero también de la región y de todo el mundo.
+:::
+
+
+# ¿Qué es una Hackathon? {background-color="#74ac00"}
+
+## 5. ¿Qué es una Hackathon?
+
+::: incremental
+-   Es un evento en el que las personas se reúnen para colaborar intensamente en la resolución de problemas o la creación de proyectos innovadores en un plazo determinado.
+
+-   Se han vuelto muy populares por fomentar la innovación, la colaboración y la resolución de problemas en diversos ámbitos.
+:::
+
+---
+
+## 5. ¿Qué es una Hackathon?
+
+### ¿Qué esperamos de la Hackathon de NaturalistaUY?
+
+::: incremental
+-   Que sea una oportunidad para aprender nuevas herramientas para el análisis de datos derivados de la plataforma.
+
+-   Trabajar con retos basados en datos.
+
+-   Pero sobre todo, ¡que se diviertan!
+:::
+
+# Agenda de la Hackathon de NaturalistaUY {background-color="#74ac00"}
+
+## 6. Agenda de la Hackathon de NaturalistaUY
+
+### Día 1 (martes de 8:30 a 10)
+
+::: font-table
+| **Bloque**              | **Actividad**                                                                                                                                                       | **Tiempo estimado** |
+|------------------------|------------------------|------------------------|
+| Introducciones          | Presentación de docentes y estudiantes (menti)                                                                                                                      | 10 minutos          |
+| Introducción teórica    | Datos abiertos, ciencia abierta y ciencia comunitaria. NaturalistaUY, el portal de iNaturalist para Uruguay. ¿Qué es una Hackathon?                                 | 30 minutos          |
+| Práctica: NaturalistaUY | Cómo explorar datos en la plataforma: Búsquedas por taxones, lugares, proyectos. Cómo descargar datos de la plataforma: Ejemplo Gran Biobúsqueda del Sur (GBS) 2022 | 20 minutos          |
+| Práctica: R             | Análisis de datos en R, con RStudio y tidyverse: Lectura de datos (readr). Generación de tablas de resúmenes de datos (dplyr, knitr)                                | 30 minutos          |
+:::
+
+---
+
+## 6. Agenda de la Hackathon de NaturalistaUY
+
+### Día 2 (miércoles de 8:30 a 10)
+
+::: font-table
+| **Bloque**              | **Actividad**                                                                                       | **Tiempo estimado** |
+|------------------------|------------------------|------------------------|
+| Práctica: R             | Continuación: Generación de figuras (ggplot). Visualización de datos espaciales (sf, tmap)          | 30 minutos          |
+| Elección Tema Hackathon | Armado de grupos (3 o 4 personas) y elección de tema (preguntas de investigación) para la Hackathon | 15 minutos          |
+| Práctica: Hackathon     | Inicio de la Hackathon en grupos sobre los datos generados durante la Gran Biobúsqueda del Sur 2023 | 45 minutos          |
+:::
+
+---
+
+## 6. Agenda de la Hackathon de NaturalistaUY
+
+### Día 3 (jueves de 8 a 10)
+
+::: font-table
+| **Bloque**               | **Actividad**                                                                                       | **Tiempo estimado** |
+|------------------------|------------------------|------------------------|
+| Práctica: Hackathon      | Continuación Hackathon en grupos sobre los datos generados durante la Gran Biobúsqueda del Sur 2023 | 60 minutos          |
+| Resultados: preparación  | Preparación de los resultados de la Hackathon para presentar al resto                               | 15 minutos          |
+| Resultados: presentación | Presentación de los resultados de la Hackathon de cada grupo                                        | 30 minutos          |
+| Cierre                   | Posibilidad de generar una publicación en el Boletín SZU con los resultados                         | 15 minutos          |
+:::
