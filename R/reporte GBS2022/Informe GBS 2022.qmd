@@ -1,0 +1,143 @@
+---
+title: "Informe Gran Biobúsqueda de Sur 2022"
+format: 
+  html:
+    toc: true
+    toc-location: right
+    smooth-scroll: true
+    html-math-method: katex
+    code-fold: true
+self-contained: true
+editor: source
+author: 'Florencia Grattarola'
+date: '`r format(Sys.time(), "%Y-%m-%d")`'
+---
+
+## Descarga de datos
+
+Para descargar datos de NaturalistaUY usamos la [API de iNaturalist](https://api.inaturalist.org/v1/docs/). Los datos se descargan considerando todas las observaciones del proyecto [GBS 2022: Uruguay](https://www.naturalista.uy/projects/gbs-2022-uruguay):
+
+  - ID del proyecto: `project_id=gbs-2022-uruguay`
+
+```{r}
+#| message: false
+#| label: datos-api
+#| code-fold: false
+
+library(httr)
+library(jsonlite)
+library(tidyverse)
+
+getiNatObservations <- function(project_id){
+  
+  total_results = NULL
+  page = 1 
+  delay = 1.0
+  results = tibble()
+  
+  while(is.null(total_results) || nrow(results) < total_results) {
+    
+    call_url <- str_glue('https://api.inaturalist.org/v1/observations?',
+                         'project_id={project_id}',
+                         '&per_page=200&page={page}')
+    
+    get_json_call <- GET(url = call_url) %>% 
+      content(as = "text") %>% fromJSON(flatten = TRUE)
+    
+    if (!is.null(get_json_call)) {
+      if (is.null(total_results)) {
+        total_results <- get_json_call$total_results # number of results of the call
+      }
+      results_i <- as_tibble(get_json_call$results) %>% 
+        select(taxon_name=taxon.name, taxon_rank=taxon.rank, identifications_count, 
+               created_at, observed_on, class, order, family, 
+               captive, quality_grade,
+               geojson.coordinates, positional_accuracy, obscured,
+               user_login=user.login, user_id=user.id, user_name=user.name, 
+               user_observations_count=user.observations_count,
+               license_code, num_identification_agreements, uri) %>%
+        unnest_wider(geojson.coordinates, names_sep = "_") %>%
+        rename(longitude=geojson.coordinates_1, latitude=geojson.coordinates_2)
+      results <- rbind(results, results_i)
+      page <- page + 1
+      Sys.sleep(delay)
+    }
+  }
+  return(results)
+}
+```
+
+```{r}
+#| label: get-iNat-obs
+#| eval: false
+#| code-fold: false
+datos_GBS22 <- getiNatObservations(project_id='gbs-2022-uruguay')
+write_csv(datos_GBS22, 'datos/datos_GBS22.csv')
+```
+
+
+```{r}
+#| label: read-data
+#| message: false
+#| warning: false
+#| echo: false
+datos_GBS22 <- read_csv('datos/datos_GBS22.csv')
+```
+
+## Resumen 
+
+### Observaciones
+
+¿Cuántas observaciones se registraron en la GBS 2022?
+```{r}
+#| label: num-records
+#| code-fold: false
+nrow(datos_GBS22)
+```
+
+### Especies
+
+¿Cuántas especies se registraron? 
+```{r}
+#| label: num-species
+#| code-fold: false
+datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  distinct(taxon_name)
+```
+
+¿Qué grupos taxonómicos fueron más comunes? 
+```{r}
+#| label: num-species
+#| code-fold: false
+datos_GBS22 %>% 
+  group_by(or) %>% 
+  distinct(taxon_name)
+```
+
+¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma? 
+¿Se registraron especies amenazadas a nivel local o mundial?  
+
+  
+### Departamentos
+¿Cuáles fueron las especies más registradas en cada departamento? 
+¿Coincide esto con tendencias previas?
+  
+### Observadores
+¿Cuántas personas se unieron a iNat por este evento? 
+¿Cuántas especies registró en promedio cada persona?  
+  
+
+## Análisis espacial
+
+Datos por departamento
+Datos en Áreas Protegidas
+
+## Análisis temporal
+
+Intensidad por día
+
+
+
+
+
