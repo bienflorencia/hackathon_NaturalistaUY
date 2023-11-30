@@ -50,4 +50,4 @@ rsconnect/
 /.quarto/
 
 # ignored repo
-docs/clases/*
+#docs/clases/*
