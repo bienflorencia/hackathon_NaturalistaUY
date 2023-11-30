@@ -1,4 +1,4 @@
 # Contenido
 
-  - [Clases](/clases)
-  - [Materiales](/materiales)
+  - [Clases](/docs/clases)
+  - [Materiales](/docs/materiales)
