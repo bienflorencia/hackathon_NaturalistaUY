@@ -26,6 +26,7 @@ Para descargar datos de NaturalistaUY usamos la [API de iNaturalist](https://api
 
 library(httr)
 library(jsonlite)
+library(knitr)
 library(tidyverse)
 
 getiNatObservations <- function(project_id){
@@ -81,14 +82,17 @@ write_csv(datos_GBS22, 'datos/datos_GBS22.csv')
 #| message: false
 #| warning: false
 #| echo: false
-datos_GBS22 <- read_csv('datos/datos_GBS22.csv')
+datos_GBS22 <- read_csv('datos/observations-375124.csv')
 ```
 
 ## Resumen 
 
 ### Observaciones
 
-¿Cuántas observaciones se registraron en la GBS 2022?
+  -   ¿Cuántas observaciones se registraron en la GBS 2022?
+
+Para responder esta pregunta sólo precisamos contar la cantidad de registro en el conjunto de datos.
+
 ```{r}
 #| label: num-records
 #| code-fold: false
@@ -97,27 +101,174 @@ nrow(datos_GBS22)
 
 ### Especies
 
-¿Cuántas especies se registraron? 
+  -   ¿Cuántas especies se registraron? 
+
+En este caso es importante tener en cuenta que los registros no siempre llegan al nivel de especie por lo que vamos a tener que primero filtrarlos para después contarlos. Para esto vamos a precisar conocer el `taxon_rank` de cada observación, si es especie, género, familia, etc. Este dato no lo aporta la descarga de los datos, pero lo podemos obtener haciendo una llamada a la [API de iNaturalist](https://api.inaturalist.org/v1/docs/).  
+
+Para esto creamos la función `getiNatTaxonRank` y la usamos con el argumento `taxon_id`. La llamada a taxa en la API nos brinda información sobre el número de observaciones con las que cuenta el taxón (`observations_count`). Vamos a aprovechar a guardar también este valor para responder otras preguntas ;)
+
+
+```{r}
+#| label: get-iNat-taxon-rank-function
+#| code-fold: false
+
+getiNatTaxonRank <- function(taxon_id){
+  
+  taxaRanks <- tibble(taxon_name = character(),
+                      taxon_id = numeric(),
+                      taxon_rank = character(),
+                      observations_count = numeric())
+  
+  num_results = 0 # se usa para dormir la llamada a la API y para imprimir en consola el progreso
+  
+  for (taxon_id_i in taxon_id) {  
+    
+    if ((num_results %% 10) + 10 == 10) {
+      Sys.sleep(10) # Cada 10 consultas, el código para 10 segundos
+    }
+    
+    call_url <- str_glue('https://api.inaturalist.org/v1/taxa/',
+                         '{taxon_id_i}')
+    
+    get_json_call <- GET(url = call_url) %>%
+      content(as = "text") %>% fromJSON(flatten = TRUE)
+    
+    results <- as_tibble(get_json_call$results) 
+    
+    taxaRanks_i <- tibble(taxon_name = results$name,
+                          taxon_id = taxon_id_i,
+                          taxon_rank = results$rank,
+                          observations_count = results$observations_count)
+    
+    taxaRanks <- rbind(taxaRanks, taxaRanks_i)
+    num_results <- num_results + 1
+    cat(num_results, '\n')
+  }
+  return(taxaRanks)
+}
+```
+
+Para simplificar la llamada a la API, vamos a obtener la lista única de IDs (`taxa_list`). Luego corremos la función y finalmente unimos el resultado a nuestro conjunto de datos inicial para asignar a cada registro un valor de `taxon_rank` y `observations_count`. 
+
+```{r}
+#| label:  get-iNat-taxon-rank-run
+#| code-fold: false
+#| eval: false
+
+taxa_list <- datos_GBS22 %>% 
+  filter(!is.na(taxon_id)) %>% 
+  distinct(taxon_id) %>% pull(taxon_id)
+
+datos_GBS22_taxonRank <- getiNatTaxonRank(taxa_list)
+
+datos_GBS22 <- left_join(datos_GBS22, 
+                         datos_GBS22_taxonRank %>% 
+                           select(taxon_id, taxon_rank), 
+                         by='taxon_id')
+```
+
+```{r}
+#| label: read-data-taxon-rank
+#| message: false
+#| warning: false
+#| echo: false
+
+datos_GBS22_taxonRank <- read_csv('datos/datos_GBS22_taxonRank.csv')
+datos_GBS22 <- left_join(datos_GBS22, datos_GBS22_taxonRank %>% select(taxon_id, taxon_rank, observations_count), by='taxon_id')
+```
+
+Con este dato, vamos a poder filtrar los registros que están a nivel de especie para luego contarlos.
+
 ```{r}
 #| label: num-species
 #| code-fold: false
+
 datos_GBS22 %>% 
   filter(taxon_rank=='species') %>% 
-  distinct(taxon_name)
+  distinct(taxon_species_name) %>% nrow()
 ```
 
-¿Qué grupos taxonómicos fueron más comunes? 
+  -   ¿Qué grupos taxonómicos fueron más comunes? 
+  
+Los grupos más comunes serán aquellos con más observaciones. Pero, ¿a qué nivel queremos hacer el corte? ¿A nivel de reino, orden, clase, familia? Esta es una decisión que podemos tomar teniendo cuenta la distribución de los datos. Para hacerlo sencillo, vamos a usar el campo `iconic_taxon_name` que NaturalistaUY usa para representar sus datos.
+
 ```{r}
-#| label: num-species
+#| label: num-taxa
 #| code-fold: false
 datos_GBS22 %>% 
-  group_by(or) %>% 
-  distinct(taxon_name)
+  group_by(iconic_taxon_name) %>% 
+  count() %>% 
+  kable()
 ```
 
-¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma? 
-¿Se registraron especies amenazadas a nivel local o mundial?  
+  -   ¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma? 
+Para saber si se registraron especies nuevas para Uruguay, podemos chequear si el `taxon_id` ya contaba con registros previos a la fecha de observación.  
 
+```{r}
+#| label: novedosos-Uruguay
+#| code-fold: false
+
+# datos_GBS22
+```
+
+
+Para saber si se registraron especies nuevas para iNaturalist en el marco de la Gran Biobúsqueda, vamos a hacer uso del campo `observations_count` que generamos en pasos anteriores. Si el taxa tiene 1 sólo registro,  ¡entonces será una especie novedosa para la plataforma!
+
+```{r}
+#| label: novedosos-iNat
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(observations_count==1) %>% 
+  select(scientific_name)
+```
+
+Si probamos con el segundo registro, encontramos algunas especies más
+
+```{r}
+#| label: novedosos-iNat-2
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(observations_count==2) %>% 
+  select(scientific_name, taxon_kingdom_name, taxon_class_name) %>% 
+  kable()
+```
+
+
+
+
+  -   ¿Se registraron especies amenazadas a nivel local o mundial?  
+
+Los datos que proporciona la plataforma sobre el estado de conservación de las especies son muy variados, desde estados globales (Lista Roja de la UICN), hasta clasificaciones nacionales o regionales. No hay una manera sencilla de extraer esta información, pero existe un paquete de R que nos puede a ayudar: `rredlist`. Usaremos la función ya creada por Biodiversidata para extraer estados de conservación.
+
+```{r}
+#| label: label
+#| code-fold: false
+
+retrieve_IUCN_data <- function(speciesList){
+  IUCN_status <- data.frame(Species = character(), Status = character(), 
+                            Trend = character(), stringsAsFactors=FALSE)
+  for(sp in speciesList){
+    UICN_search <- rl_search(name = sp)
+    if (length(UICN_search$result) == 0){
+      IUCN_status_sp <- data.frame(Species = sp, 
+                                   Status = 'NA', 
+                                   Trend = 'NA', stringsAsFactors=FALSE)
+      IUCN_status <- rbind(IUCN_status, IUCN_status_sp)
+      cat(sp,'----- CHECK\n')
+    }
+    else {
+      IUCN_status_sp <- data.frame(Species = UICN_search$result$scientific_name, 
+                                   Status = UICN_search$result$category, 
+                                   Trend = UICN_search$result$population_trend, stringsAsFactors=FALSE)
+      IUCN_status <- rbind(IUCN_status, IUCN_status_sp)
+    }
+  }
+  return(IUCN_status)
+}
+
+```
   
 ### Departamentos
 ¿Cuáles fueron las especies más registradas en cada departamento? 
