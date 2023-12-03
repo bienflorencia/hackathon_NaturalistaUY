@@ -48,7 +48,8 @@ Una vez descargados los datos, los cargamos.
 #| label: read-data
 #| message: false
 #| warning: false
-#| echo: false
+#| code-fold: false
+
 datos_GBS22 <- read_csv('datos/observations-382466.csv')
 ```
 
@@ -58,7 +59,7 @@ datos_GBS22 <- read_csv('datos/observations-382466.csv')
 
 #### ¿Cuántas observaciones se registraron en la GBS 2022?
 
-Para responder esta pregunta sólo precisamos contar la cantidad de registro en el conjunto de datos.
+Para responder esta pregunta sólo precisamos contar la cantidad de registros en el conjunto de datos.
 
 ```{r}
 #| label: num-records
@@ -177,13 +178,6 @@ datos_GBS22 %>%
 #### ¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma?
   
 Para saber si se registraron especies nuevas para Uruguay, podemos chequear si el `taxon_id` ya contaba con registros previos a la fecha de observación.
-
-```{r}
-#| label: novedosos-Uruguay
-#| code-fold: false
-
-# datos_GBS22
-```
 
 Para saber si se registraron especies nuevas para iNaturalist en el marco de la Gran Biobúsqueda, vamos a hacer uso del campo `observations_count` que generamos en pasos anteriores. Si el taxa tiene 1 sólo registro, ¡entonces será una especie novedosa para la plataforma!
 
@@ -344,7 +338,7 @@ datos_GBS22 %>%
 ### Departamentos
 #### ¿Cuáles fueron las especies más registradas en cada departamento? 
 
-Para esto, vamos a usar el campo `place_state_name`. Tamb
+Para esto, vamos a usar el campo `place_state_name`.
 
 ```{r}
 #| label: species-per-state
@@ -410,9 +404,37 @@ Para esto, precisamos saber la fecha a la que se reunió cada usuarie, para desp
 
 #### ¿Cuál es el porcentaje de datos con coordenadas oscurecidas?
 
+Por defecto, registros de especies sensibles son oscurecidos. Es importante saber eso, porque la posición geográfica no será la real.
+
+```{r}
+#| label: obscured
+#| code-fold: false
+
+datos_GBS22 %>% 
+    group_by(coordinates_obscured) %>% 
+    summarise(total=n(),
+              obscured=sum(coordinates_obscured)) %>% 
+    mutate(percent = obscured/sum(total)*100) %>% 
+    select(percent) %>% tail(1)
+```
+
+
 #### Datos por departamento
+
+```{r}
+datos_GBS22 %>% 
+  group_by(place_state_name) %>%
+  count() %>%  
+  kable()
+```
+
 #### Datos en Áreas Protegidas
 
+```{r}
+# areas_protegidas <-read_sf('data/areas_protegidas/c397Polygon.shp',
+#                            options = 'ENCODING=WINDOWS-1252') %>% 
+#   st_transform(32721) %>% st_cast()
+```
 ## Análisis temporal
 
 #### Intensidad por día

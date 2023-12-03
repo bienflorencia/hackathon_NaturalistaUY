@@ -171,7 +171,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><img src="/img/export.jpg" class="centre img-fluid"></p>
 <p>Una vez descargados los datos, los cargamos.</p>
 <div class="cell">
-
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'datos/observations-382466.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="resumen" class="level2">
@@ -180,9 +180,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="observaciones">Observaciones</h3>
 <section id="cuántas-observaciones-se-registraron-en-la-gbs-2022" class="level4">
 <h4 class="anchored" data-anchor-id="cuántas-observaciones-se-registraron-en-la-gbs-2022">¿Cuántas observaciones se registraron en la GBS 2022?</h4>
-<p>Para responder esta pregunta sólo precisamos contar la cantidad de registro en el conjunto de datos.</p>
+<p>Para responder esta pregunta sólo precisamos contar la cantidad de registros en el conjunto de datos.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(datos_GBS22)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(datos_GBS22)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1157</code></pre>
 </div>
@@ -196,64 +196,64 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>En este caso es importante tener en cuenta que los registros no siempre llegan al nivel de especie por lo que vamos a tener que primero filtrarlos para después contarlos. Para esto vamos a precisar conocer el <code>taxon_rank</code> de cada observación, si es especie, género, familia, etc. Este dato no lo aporta la descarga de los datos, pero lo podemos obtener haciendo una llamada a la <a href="https://api.inaturalist.org/v1/docs/">API de iNaturalist</a>.</p>
 <p>Para esto creamos la función <code>getiNatTaxonRank</code> y la usamos con el argumento <code>taxon_id</code>. La llamada a <strong>taxa</strong> en la API nos brinda información sobre el número de observaciones con las que cuenta el taxón (<code>observations_count</code>). Vamos a aprovechar a guardar también este valor para responder otras preguntas ;)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>getiNatTaxonRank <span class="ot">&lt;-</span> <span class="cf">function</span>(taxon_id){</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  taxaRanks <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">taxon_name =</span> <span class="fu">character</span>(),</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">taxon_id =</span> <span class="fu">numeric</span>(),</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">taxon_rank =</span> <span class="fu">character</span>(),</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                      <span class="at">observations_count =</span> <span class="fu">numeric</span>())</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  num_results <span class="ot">=</span> <span class="dv">0</span> <span class="co"># se usa para dormir la llamada a la API y para imprimir en consola el progreso</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (taxon_id_i <span class="cf">in</span> taxon_id) {  </span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ((num_results <span class="sc">%%</span> <span class="dv">10</span>) <span class="sc">+</span> <span class="dv">10</span> <span class="sc">==</span> <span class="dv">10</span>) {</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">Sys.sleep</span>(<span class="dv">10</span>) <span class="co"># Cada 10 consultas, el código para 10 segundos</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    call_url <span class="ot">&lt;-</span> <span class="fu">str_glue</span>(<span class="st">'https://api.inaturalist.org/v1/taxa/'</span>,</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>                         <span class="st">'{taxon_id_i}'</span>)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    get_json_call <span class="ot">&lt;-</span> <span class="fu">GET</span>(<span class="at">url =</span> call_url) <span class="sc">%&gt;%</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">content</span>(<span class="at">as =</span> <span class="st">"text"</span>) <span class="sc">%&gt;%</span> <span class="fu">fromJSON</span>(<span class="at">flatten =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    results <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(get_json_call<span class="sc">$</span>results) </span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    taxaRanks_i <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">taxon_name =</span> results<span class="sc">$</span>name,</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                          <span class="at">taxon_id =</span> taxon_id_i,</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>                          <span class="at">taxon_rank =</span> results<span class="sc">$</span>rank,</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>                          <span class="at">observations_count =</span> results<span class="sc">$</span>observations_count)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    taxaRanks <span class="ot">&lt;-</span> <span class="fu">rbind</span>(taxaRanks, taxaRanks_i)</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    num_results <span class="ot">&lt;-</span> num_results <span class="sc">+</span> <span class="dv">1</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(num_results, <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(taxaRanks)</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>getiNatTaxonRank <span class="ot">&lt;-</span> <span class="cf">function</span>(taxon_id){</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  taxaRanks <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">taxon_name =</span> <span class="fu">character</span>(),</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">taxon_id =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">taxon_rank =</span> <span class="fu">character</span>(),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                      <span class="at">observations_count =</span> <span class="fu">numeric</span>())</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  num_results <span class="ot">=</span> <span class="dv">0</span> <span class="co"># se usa para dormir la llamada a la API y para imprimir en consola el progreso</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (taxon_id_i <span class="cf">in</span> taxon_id) {  </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ((num_results <span class="sc">%%</span> <span class="dv">10</span>) <span class="sc">+</span> <span class="dv">10</span> <span class="sc">==</span> <span class="dv">10</span>) {</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">Sys.sleep</span>(<span class="dv">10</span>) <span class="co"># Cada 10 consultas, el código para 10 segundos</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    call_url <span class="ot">&lt;-</span> <span class="fu">str_glue</span>(<span class="st">'https://api.inaturalist.org/v1/taxa/'</span>,</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                         <span class="st">'{taxon_id_i}'</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    get_json_call <span class="ot">&lt;-</span> <span class="fu">GET</span>(<span class="at">url =</span> call_url) <span class="sc">%&gt;%</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">content</span>(<span class="at">as =</span> <span class="st">"text"</span>) <span class="sc">%&gt;%</span> <span class="fu">fromJSON</span>(<span class="at">flatten =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    results <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(get_json_call<span class="sc">$</span>results) </span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    taxaRanks_i <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">taxon_name =</span> results<span class="sc">$</span>name,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                          <span class="at">taxon_id =</span> taxon_id_i,</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                          <span class="at">taxon_rank =</span> results<span class="sc">$</span>rank,</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>                          <span class="at">observations_count =</span> results<span class="sc">$</span>observations_count)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    taxaRanks <span class="ot">&lt;-</span> <span class="fu">rbind</span>(taxaRanks, taxaRanks_i)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    num_results <span class="ot">&lt;-</span> num_results <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(num_results, <span class="st">'</span><span class="sc">\n</span><span class="st">'</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(taxaRanks)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Para simplificar la llamada a la API, vamos a obtener la lista única de IDs (<code>taxa_list</code>). Luego corremos la función y finalmente unimos el resultado a nuestro conjunto de datos inicial para asignar a cada registro un valor de <code>taxon_rank</code> y <code>observations_count</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>taxa_list <span class="ot">&lt;-</span> datos_GBS22 <span class="sc">%&gt;%</span> </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(taxon_id)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(taxon_id) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(taxon_id)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>taxonRank_GBS22 <span class="ot">&lt;-</span> <span class="fu">getiNatTaxonRank</span>(taxa_list)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># write_csv(taxonRank_GBS22, 'datos/taxonRank_GBS22.csv')</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="ot">&lt;-</span> <span class="fu">left_join</span>(datos_GBS22, taxonRank_GBS22 <span class="sc">%&gt;%</span> </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">select</span>(taxon_id, </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                                  taxon_rank,</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                                  observations_count),</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">by=</span><span class="st">'taxon_id'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>taxa_list <span class="ot">&lt;-</span> datos_GBS22 <span class="sc">%&gt;%</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(taxon_id)) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(taxon_id) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(taxon_id)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>taxonRank_GBS22 <span class="ot">&lt;-</span> <span class="fu">getiNatTaxonRank</span>(taxa_list)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># write_csv(taxonRank_GBS22, 'datos/taxonRank_GBS22.csv')</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="ot">&lt;-</span> <span class="fu">left_join</span>(datos_GBS22, taxonRank_GBS22 <span class="sc">%&gt;%</span> </span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">select</span>(taxon_id, </span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                                  taxon_rank,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                                  observations_count),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">by=</span><span class="st">'taxon_id'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 
 </div>
 <p>Con este dato, vamos a poder filtrar los registros que están a nivel de especie para luego contarlos.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(taxon_rank<span class="sc">==</span><span class="st">'species'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(taxon_species_name) <span class="sc">%&gt;%</span> <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(taxon_rank<span class="sc">==</span><span class="st">'species'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(taxon_species_name) <span class="sc">%&gt;%</span> <span class="fu">nrow</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 485</code></pre>
 </div>
@@ -265,10 +265,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iconic_taxon_name) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iconic_taxon_name) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
@@ -335,9 +335,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="se-registraron-especies-nuevas-para-uruguay-y-para-la-plataforma" class="level4">
 <h4 class="anchored" data-anchor-id="se-registraron-especies-nuevas-para-uruguay-y-para-la-plataforma">¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma?</h4>
 <p>Para saber si se registraron especies nuevas para Uruguay, podemos chequear si el <code>taxon_id</code> ya contaba con registros previos a la fecha de observación.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># datos_GBS22</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 <p>Para saber si se registraron especies nuevas para iNaturalist en el marco de la Gran Biobúsqueda, vamos a hacer uso del campo <code>observations_count</code> que generamos en pasos anteriores. Si el taxa tiene 1 sólo registro, ¡entonces será una especie novedosa para la plataforma!</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
@@ -588,7 +585,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="departamentos">Departamentos</h3>
 <section id="cuáles-fueron-las-especies-más-registradas-en-cada-departamento" class="level4">
 <h4 class="anchored" data-anchor-id="cuáles-fueron-las-especies-más-registradas-en-cada-departamento">¿Cuáles fueron las especies más registradas en cada departamento?</h4>
-<p>Para esto, vamos a usar el campo <code>place_state_name</code>. Tamb</p>
+<p>Para esto, vamos a usar el campo <code>place_state_name</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(taxon_rank<span class="sc">==</span><span class="st">'species'</span>) <span class="sc">%&gt;%</span> </span>
@@ -962,12 +959,128 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 class="anchored" data-anchor-id="análisis-espacial">Análisis espacial</h2>
 <section id="cuál-es-el-porcentaje-de-datos-con-coordenadas-oscurecidas" class="level4">
 <h4 class="anchored" data-anchor-id="cuál-es-el-porcentaje-de-datos-con-coordenadas-oscurecidas">¿Cuál es el porcentaje de datos con coordenadas oscurecidas?</h4>
+<p>Por defecto, registros de especies sensibles son oscurecidos. Es importante saber eso, porque la posición geográfica no será la real.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(coordinates_obscured) <span class="sc">%&gt;%</span> </span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">total=</span><span class="fu">n</span>(),</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">obscured=</span><span class="fu">sum</span>(coordinates_obscured)) <span class="sc">%&gt;%</span> </span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">percent =</span> obscured<span class="sc">/</span><span class="fu">sum</span>(total)<span class="sc">*</span><span class="dv">100</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(percent) <span class="sc">%&gt;%</span> <span class="fu">tail</span>(<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 1
+  percent
+    &lt;dbl&gt;
+1    1.82</code></pre>
+</div>
+</div>
 </section>
 <section id="datos-por-departamento" class="level4">
 <h4 class="anchored" data-anchor-id="datos-por-departamento">Datos por departamento</h4>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>datos_GBS22 <span class="sc">%&gt;%</span> </span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(place_state_name) <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">%&gt;%</span>  </span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<thead>
+<tr class="header">
+<th style="text-align: left;">place_state_name</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Artigas</td>
+<td style="text-align: right;">61</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Canelones</td>
+<td style="text-align: right;">200</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cerro Largo</td>
+<td style="text-align: right;">193</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Colonia</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Durazno</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Flores</td>
+<td style="text-align: right;">47</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Florida</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lavalleja</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Maldonado</td>
+<td style="text-align: right;">113</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Montevideo</td>
+<td style="text-align: right;">154</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Paysandú</td>
+<td style="text-align: right;">54</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rivera</td>
+<td style="text-align: right;">24</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rocha</td>
+<td style="text-align: right;">49</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Río Negro</td>
+<td style="text-align: right;">14</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Salto</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">San José</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Soriano</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Tacuarembó</td>
+<td style="text-align: right;">190</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </section>
 <section id="datos-en-áreas-protegidas" class="level4">
 <h4 class="anchored" data-anchor-id="datos-en-áreas-protegidas">Datos en Áreas Protegidas</h4>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># areas_protegidas &lt;-read_sf('data/areas_protegidas/c397Polygon.shp',</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co">#                            options = 'ENCODING=WINDOWS-1252') %&gt;% </span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co">#   st_transform(32721) %&gt;% st_cast()</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
 </section>
 </section>
 <section id="análisis-temporal" class="level2">
