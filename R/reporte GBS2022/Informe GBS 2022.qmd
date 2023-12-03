@@ -15,81 +15,48 @@ date: '`r format(Sys.time(), "%Y-%m-%d")`'
 
 ## Descarga de datos
 
-Para descargar datos de NaturalistaUY usamos la [API de iNaturalist](https://api.inaturalist.org/v1/docs/). Los datos se descargan considerando todas las observaciones del proyecto [GBS 2022: Uruguay](https://www.naturalista.uy/projects/gbs-2022-uruguay):
-
-  - ID del proyecto: `project_id=gbs-2022-uruguay`
+Primero, cargamos las librerías que vamos a usar para todo el reporte
 
 ```{r}
 #| message: false
-#| label: datos-api
+#| label: librerias
 #| code-fold: false
 
 library(httr)
 library(jsonlite)
 library(knitr)
+library(geonames)
+library(rredlist)
+library(tmap)
+library(sf)
 library(tidyverse)
-
-getiNatObservations <- function(project_id){
-  
-  total_results = NULL
-  page = 1 
-  delay = 1.0
-  results = tibble()
-  
-  while(is.null(total_results) || nrow(results) < total_results) {
-    
-    call_url <- str_glue('https://api.inaturalist.org/v1/observations?',
-                         'project_id={project_id}',
-                         '&per_page=200&page={page}')
-    
-    get_json_call <- GET(url = call_url) %>% 
-      content(as = "text") %>% fromJSON(flatten = TRUE)
-    
-    if (!is.null(get_json_call)) {
-      if (is.null(total_results)) {
-        total_results <- get_json_call$total_results # number of results of the call
-      }
-      results_i <- as_tibble(get_json_call$results) %>% 
-        select(taxon_name=taxon.name, taxon_rank=taxon.rank, identifications_count, 
-               created_at, observed_on, class, order, family, 
-               captive, quality_grade,
-               geojson.coordinates, positional_accuracy, obscured,
-               user_login=user.login, user_id=user.id, user_name=user.name, 
-               user_observations_count=user.observations_count,
-               license_code, num_identification_agreements, uri) %>%
-        unnest_wider(geojson.coordinates, names_sep = "_") %>%
-        rename(longitude=geojson.coordinates_1, latitude=geojson.coordinates_2)
-      results <- rbind(results, results_i)
-      page <- page + 1
-      Sys.sleep(delay)
-    }
-  }
-  return(results)
-}
 ```
 
-```{r}
-#| label: get-iNat-obs
-#| eval: false
-#| code-fold: false
-datos_GBS22 <- getiNatObservations(project_id='gbs-2022-uruguay')
-write_csv(datos_GBS22, 'datos/datos_GBS22.csv')
-```
+Para descargar datos de NaturalistaUY vamos a usar el [explorador en el sitio web](https://www.naturalista.uy/observations/export). Los datos se descargan considerando todas las observaciones del proyecto [GBS 2022: Uruguay](https://www.naturalista.uy/projects/gbs-2022-uruguay), usando el ID del proyecto:`project_id=gbs-2022-uruguay`.
 
+Antes de generar la descarga **importante** incluir algunas columnas extras que no están pre-seleccionadas: 
+
+  -   **Localización**: `place_state_name`, `place_country_name`, `place_admin1_name`.
+
+  -   **Taxón**: `taxon_kingdom_name`, `taxon_phylum_name`, `taxon_class_name`, `taxon_order_name`, `taxon_family_name`, `taxon_genus_name`, `taxon_species_name`, `taxon_subspecies_name`.
+
+![](/img/export.jpg){.centre}
+
+Una vez descargados los datos, los cargamos.
 
 ```{r}
 #| label: read-data
 #| message: false
 #| warning: false
 #| echo: false
-datos_GBS22 <- read_csv('datos/observations-375124.csv')
+datos_GBS22 <- read_csv('datos/observations-382466.csv')
 ```
 
 ## Resumen 
 
 ### Observaciones
 
-  -   ¿Cuántas observaciones se registraron en la GBS 2022?
+#### ¿Cuántas observaciones se registraron en la GBS 2022?
 
 Para responder esta pregunta sólo precisamos contar la cantidad de registro en el conjunto de datos.
 
@@ -101,11 +68,11 @@ nrow(datos_GBS22)
 
 ### Especies
 
-  -   ¿Cuántas especies se registraron? 
+#### ¿Cuántas especies se registraron? 
 
 En este caso es importante tener en cuenta que los registros no siempre llegan al nivel de especie por lo que vamos a tener que primero filtrarlos para después contarlos. Para esto vamos a precisar conocer el `taxon_rank` de cada observación, si es especie, género, familia, etc. Este dato no lo aporta la descarga de los datos, pero lo podemos obtener haciendo una llamada a la [API de iNaturalist](https://api.inaturalist.org/v1/docs/).  
 
-Para esto creamos la función `getiNatTaxonRank` y la usamos con el argumento `taxon_id`. La llamada a taxa en la API nos brinda información sobre el número de observaciones con las que cuenta el taxón (`observations_count`). Vamos a aprovechar a guardar también este valor para responder otras preguntas ;)
+Para esto creamos la función `getiNatTaxonRank` y la usamos con el argumento `taxon_id`. La llamada a **taxa** en la API nos brinda información sobre el número de observaciones con las que cuenta el taxón (`observations_count`). Vamos a aprovechar a guardar también este valor para responder otras preguntas ;)
 
 
 ```{r}
@@ -151,7 +118,7 @@ getiNatTaxonRank <- function(taxon_id){
 Para simplificar la llamada a la API, vamos a obtener la lista única de IDs (`taxa_list`). Luego corremos la función y finalmente unimos el resultado a nuestro conjunto de datos inicial para asignar a cada registro un valor de `taxon_rank` y `observations_count`. 
 
 ```{r}
-#| label:  get-iNat-taxon-rank-run
+#| label: get-iNat-taxon-rank-run
 #| code-fold: false
 #| eval: false
 
@@ -159,11 +126,13 @@ taxa_list <- datos_GBS22 %>%
   filter(!is.na(taxon_id)) %>% 
   distinct(taxon_id) %>% pull(taxon_id)
 
-datos_GBS22_taxonRank <- getiNatTaxonRank(taxa_list)
+taxonRank_GBS22 <- getiNatTaxonRank(taxa_list)
+# write_csv(taxonRank_GBS22, 'datos/taxonRank_GBS22.csv')
 
-datos_GBS22 <- left_join(datos_GBS22, 
-                         datos_GBS22_taxonRank %>% 
-                           select(taxon_id, taxon_rank), 
+datos_GBS22 <- left_join(datos_GBS22, taxonRank_GBS22 %>% 
+                           select(taxon_id, 
+                                  taxon_rank,
+                                  observations_count),
                          by='taxon_id')
 ```
 
@@ -173,8 +142,12 @@ datos_GBS22 <- left_join(datos_GBS22,
 #| warning: false
 #| echo: false
 
-datos_GBS22_taxonRank <- read_csv('datos/datos_GBS22_taxonRank.csv')
-datos_GBS22 <- left_join(datos_GBS22, datos_GBS22_taxonRank %>% select(taxon_id, taxon_rank, observations_count), by='taxon_id')
+taxonRank_GBS22 <- read_csv('datos/taxonRank_GBS22.csv')
+datos_GBS22 <- left_join(datos_GBS22, taxonRank_GBS22 %>% 
+                           select(taxon_id, 
+                                  taxon_rank,
+                                  observations_count),
+                         by='taxon_id')
 ```
 
 Con este dato, vamos a poder filtrar los registros que están a nivel de especie para luego contarlos.
@@ -188,21 +161,22 @@ datos_GBS22 %>%
   distinct(taxon_species_name) %>% nrow()
 ```
 
-  -   ¿Qué grupos taxonómicos fueron más comunes? 
+#### ¿Qué grupos taxonómicos fueron más comunes? 
   
 Los grupos más comunes serán aquellos con más observaciones. Pero, ¿a qué nivel queremos hacer el corte? ¿A nivel de reino, orden, clase, familia? Esta es una decisión que podemos tomar teniendo cuenta la distribución de los datos. Para hacerlo sencillo, vamos a usar el campo `iconic_taxon_name` que NaturalistaUY usa para representar sus datos.
 
 ```{r}
 #| label: num-taxa
-#| code-fold: false
+
 datos_GBS22 %>% 
   group_by(iconic_taxon_name) %>% 
   count() %>% 
   kable()
 ```
 
-  -   ¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma? 
-Para saber si se registraron especies nuevas para Uruguay, podemos chequear si el `taxon_id` ya contaba con registros previos a la fecha de observación.  
+#### ¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma?
+  
+Para saber si se registraron especies nuevas para Uruguay, podemos chequear si el `taxon_id` ya contaba con registros previos a la fecha de observación.
 
 ```{r}
 #| label: novedosos-Uruguay
@@ -211,8 +185,7 @@ Para saber si se registraron especies nuevas para Uruguay, podemos chequear si e
 # datos_GBS22
 ```
 
-
-Para saber si se registraron especies nuevas para iNaturalist en el marco de la Gran Biobúsqueda, vamos a hacer uso del campo `observations_count` que generamos en pasos anteriores. Si el taxa tiene 1 sólo registro,  ¡entonces será una especie novedosa para la plataforma!
+Para saber si se registraron especies nuevas para iNaturalist en el marco de la Gran Biobúsqueda, vamos a hacer uso del campo `observations_count` que generamos en pasos anteriores. Si el taxa tiene 1 sólo registro, ¡entonces será una especie novedosa para la plataforma!
 
 ```{r}
 #| label: novedosos-iNat
@@ -223,11 +196,10 @@ datos_GBS22 %>%
   select(scientific_name)
 ```
 
-Si probamos con el segundo registro, encontramos algunas especies más
+Parece que no hay registros novedosos. Si probamos con que sea el segundo registro para la plataforma, encontramos algunas especies más
 
 ```{r}
 #| label: novedosos-iNat-2
-#| code-fold: false
 
 datos_GBS22 %>% 
   filter(observations_count==2) %>% 
@@ -236,57 +208,214 @@ datos_GBS22 %>%
 ```
 
 
+#### ¿Se registraron especies amenazadas a nivel local o mundial?  
 
-
-  -   ¿Se registraron especies amenazadas a nivel local o mundial?  
-
-Los datos que proporciona la plataforma sobre el estado de conservación de las especies son muy variados, desde estados globales (Lista Roja de la UICN), hasta clasificaciones nacionales o regionales. No hay una manera sencilla de extraer esta información, pero existe un paquete de R que nos puede a ayudar: `rredlist`. Usaremos la función ya creada por Biodiversidata para extraer estados de conservación.
+Los datos que proporciona la plataforma sobre el estado de conservación de las especies son muy variados, desde estados globales (Lista Roja de la UICN), hasta clasificaciones nacionales o regionales. No hay una manera sencilla de extraer esta información, pero existe un paquete de R que nos puede a ayudar: `rredlist`. Usaremos la función `retrieveIUCNdata` creada por Biodiversidata para extraer estados de conservación.
 
 ```{r}
-#| label: label
+#| label: IUCN-function
 #| code-fold: false
 
-retrieve_IUCN_data <- function(speciesList){
-  IUCN_status <- data.frame(Species = character(), Status = character(), 
-                            Trend = character(), stringsAsFactors=FALSE)
+retrieveIUCNdata <- function(speciesList){
+  
+  IUCN_status <- tibble(species = character(),
+                        status = character(),
+                        trend = character())
+
   for(sp in speciesList){
     UICN_search <- rl_search(name = sp)
     if (length(UICN_search$result) == 0){
-      IUCN_status_sp <- data.frame(Species = sp, 
-                                   Status = 'NA', 
-                                   Trend = 'NA', stringsAsFactors=FALSE)
+      IUCN_status_sp <- tibble(species = sp,
+                               status = 'NA',
+                               trend = 'NA')
       IUCN_status <- rbind(IUCN_status, IUCN_status_sp)
-      cat(sp,'----- CHECK\n')
+      cat(sp,'----- NOT FOUND\n')
     }
     else {
-      IUCN_status_sp <- data.frame(Species = UICN_search$result$scientific_name, 
-                                   Status = UICN_search$result$category, 
-                                   Trend = UICN_search$result$population_trend, stringsAsFactors=FALSE)
+      IUCN_status_sp <- tibble(species = UICN_search$result$scientific_name,
+                               status = UICN_search$result$category,
+                               trend = UICN_search$result$population_trend)
       IUCN_status <- rbind(IUCN_status, IUCN_status_sp)
+      cat(sp,'----- DONE\n')
     }
   }
   return(IUCN_status)
 }
-
 ```
   
+```{r}
+#| label: IUCN-data
+#| code-fold: false
+#| eval: false
+
+species_list <- datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  distinct(taxon_species_name) %>% pull(taxon_species_name)
+
+IUCNstatus_GBS22 <- retrieveIUCNdata(species_list)
+#write_csv(IUCNstatus_GBS22, 'datos/IUCNstatus_GBS22.csv')
+
+datos_GBS22 <- left_join(datos_GBS22, 
+                         IUCNstatus_GBS22 %>% 
+                           select(taxon_species_name=species), 
+                         by='taxon_species_name')
+```  
+
+```r
+Oenothera affinis ----- NOT FOUND
+Eryngium elegans ----- NOT FOUND
+Daucus pusillus ----- DONE
+Ginkgo biloba ----- DONE
+Neltuma affinis ----- NOT FOUND
+Aspidosperma quebracho-blanco ----- DONE
+Apis mellifera ----- NOT FOUND
+Euryops chrysanthemoides ----- NOT FOUND
+Camponotus mus ----- NOT FOUND
+Ipomoea indica ----- NOT FOUND
+Erythrolamprus poecilogyrus ----- DONE
+Argyranthemum frutescens ----- NOT FOUND
+Lobelia erinus ----- NOT FOUND
+Polygala myrtifolia ----- NOT FOUND
+Passiflora caerulea ----- NOT FOUND
+Eurata hilaris ----- NOT FOUND
+Senecio selloi ----- NOT FOUND
+Senecio crassiflorus ----- NOT FOUND
+Aglaonema commutatum ----- NOT FOUND
+Verbena montevidensis ----- NOT FOUND
+Hypoxis decumbens ----- NOT FOUND
+Eristalis tenax ----- NOT FOUND
+Asthenoctenus borellii ----- NOT FOUND
+Senecio angulatus ----- NOT FOUND
+Porcellio laevis ----- NOT FOUND
+Arachosia praesignis ----- NOT FOUND
+Euborellia annulipes ----- NOT FOUND
+Rumohra adiantiformis ----- DONE
+Tragia geraniifolia ----- NOT FOUND
+Calligrapha polyspila ----- NOT FOUND
+Plantago tomentosa ----- NOT FOUND
+Briza maxima ----- NOT FOUND
+Passer domesticus ----- DONE
+Ricinus communis ----- NOT FOUND
+Solanum laxum ----- NOT FOUND
+Edessa meditabunda ----- NOT FOUND
+Eriopis connexa ----- NOT FOUND
+Gymnetis chalcipes ----- NOT FOUND
+Ulmus minor ----- DONE
+Populus alba ----- DONE
+Manihot grahamii ----- NOT FOUND
+Solanum americanum ----- NOT FOUND
+Zantedeschia aethiopica ----- DONE
+Plantago major ----- DONE
+Myiophobus fasciatus ----- DONE
+Furnarius rufus ----- DONE
+Tetrapanax papyrifer ----- DONE
+Phimosus infuscatus ----- DONE
+Panicum racemosum ----- NOT FOUND
+...
+```
+
+```{r}
+#| label: read-data-IUCN-data
+#| message: false
+#| warning: false
+#| echo: false
+
+IUCNstatus_GBS22 <- read_csv('datos/IUCNstatus_GBS22.csv')
+datos_GBS22 <- left_join(datos_GBS22, 
+                         IUCNstatus_GBS22 %>% 
+                           rename(taxon_species_name=species), 
+                         by='taxon_species_name')
+```
+
+Muchas especies no han sido evaluadas por la IUCN, por lo que no tienen un estado de conservación. Ojo, también puede pasar que esté con otro nombre científico, ya que iNaturalist e IUCN no siempre manejan la misma taxonomía. En este caso, para simplificar, vamos a tener en cuenta sólo aquellas que la IUCN e iNat tienen en común.
+
+
+```{r}
+#| label: num-species-status
+
+datos_GBS22 %>% 
+    filter(taxon_rank=='species' & 
+             status %in% c('DD','NT','VU','EN','CR')) %>% 
+    distinct(taxon_species_name, .keep_all = T) %>%
+  select(taxon_species_name, status, trend) %>% kable()
+```
+
+
 ### Departamentos
-¿Cuáles fueron las especies más registradas en cada departamento? 
-¿Coincide esto con tendencias previas?
+#### ¿Cuáles fueron las especies más registradas en cada departamento? 
+
+Para esto, vamos a usar el campo `place_state_name`. Tamb
+
+```{r}
+#| label: species-per-state
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  group_by(place_state_name, taxon_species_name) %>% 
+  count() %>% 
+  group_by(place_state_name) %>% 
+  filter(n == max(n)) %>% kable()
+```
+
+#### ¿Coincide esto con tendencias previas?
+
+Para responder esto podemos ver los registros que hay para octubre (o en primavera) en cada departamento, teniendo en cuenta todos los datos, y compararlos con lo que encontramos en esta biobúsqueda.
   
 ### Observadores
-¿Cuántas personas se unieron a iNat por este evento? 
-¿Cuántas especies registró en promedio cada persona?  
-  
+
+#### ¿Cuántas persona participaron de la biobúsqueda? 
+
+```{r}
+#| label: people-count
+#| code-fold: false
+
+datos_GBS22 %>% distinct(user_id) %>% nrow() 
+```
+
+#### ¿Cuántas especies registró cada persona?  
+
+Podemos hacer uso del campo `user_login` y contar la cantidad de especies (filtrando primero aquellas a nivel de especie). Mostramos las primeras 10 personas.
+
+```{r}
+#| label: species-per-person
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  group_by(user_login) %>%
+  summarise(n_species=n_distinct(taxon_species_name)) %>% 
+  head(n=10) %>% kable()
+```
+
+#### ¿Cuántas especies registraron en promedio lxs usuarixs?  
+
+```{r}
+#| label: mean-nspecies-per-person
+#| code-fold: false
+
+datos_GBS22 %>% 
+    filter(taxon_rank=='species') %>% 
+    group_by(user_login) %>%
+    summarise(n_species=n_distinct(taxon_species_name)) %>% 
+    mutate(mean_n_species=mean(n_species)) %>% 
+    select(mean_n_species) %>% head(1)
+```
+
+#### ¿Cuántas personas se unieron a iNat por este evento? 
+
+Para esto, precisamos saber la fecha a la que se reunió cada usuarie, para después saber si fue entre el 28 y el 31 de octubre de 2022.
 
 ## Análisis espacial
 
-Datos por departamento
-Datos en Áreas Protegidas
+#### ¿Cuál es el porcentaje de datos con coordenadas oscurecidas?
+
+#### Datos por departamento
+#### Datos en Áreas Protegidas
 
 ## Análisis temporal
 
-Intensidad por día
+#### Intensidad por día
 
 
 
