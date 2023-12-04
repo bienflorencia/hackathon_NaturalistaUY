@@ -1,0 +1,601 @@
+---
+title: "Informe Gran Biobúsqueda de Sur 2022"
+format: 
+  html:
+    toc: true
+    toc-location: right
+    smooth-scroll: true
+    html-math-method: katex
+    code-fold: true
+self-contained: true
+editor: source
+author: 'Florencia Grattarola'
+date: '`r format(Sys.time(), "%Y-%m-%d")`'
+---
+
+## Descarga de datos
+
+Primero, cargamos las librerías que vamos a usar para todo el reporte
+
+```{r}
+#| message: false
+#| label: librerias
+#| code-fold: false
+
+library(httr)
+library(jsonlite)
+library(knitr)
+library(geouy)
+library(lubridate)
+library(rredlist)
+library(tmap)
+tmap_mode('view')
+library(sf)
+sf::sf_use_s2(FALSE)
+# options
+options(scipen = 999)
+library(tidyverse)
+```
+
+Para descargar datos de NaturalistaUY vamos a usar el [explorador en el sitio web](https://www.naturalista.uy/observations/export). Los datos se descargan considerando todas las observaciones del proyecto [GBS 2022: Uruguay](https://www.naturalista.uy/projects/gbs-2022-uruguay), usando el ID del proyecto:`project_id=gbs-2022-uruguay`.
+
+Antes de generar la descarga **importante** incluir algunas columnas extras que no están pre-seleccionadas: 
+
+  -   **Localización**: `place_state_name`, `place_country_name`, `place_admin1_name`.
+
+  -   **Taxón**: `taxon_kingdom_name`, `taxon_phylum_name`, `taxon_class_name`, `taxon_order_name`, `taxon_family_name`, `taxon_genus_name`, `taxon_species_name`, `taxon_subspecies_name`.
+
+![](img/export.jpg)
+
+Una vez descargados los datos, los cargamos.
+
+```{r}
+#| label: read-data
+#| message: false
+#| warning: false
+#| code-fold: false
+
+datos_GBS22 <- read_csv('datos/observations-382466.csv')
+```
+
+## Reporte
+
+### Observaciones
+
+#### ¿Cuántas observaciones se registraron en la GBS 2022?
+
+Para responder esta pregunta sólo precisamos contar la cantidad de registros en el conjunto de datos.
+
+```{r}
+#| label: num-records
+#| code-fold: false
+nrow(datos_GBS22)
+```
+
+### Especies
+
+#### ¿Cuántas especies se registraron? 
+
+En este caso es importante tener en cuenta que los registros no siempre llegan al nivel de especie por lo que vamos a tener que primero filtrarlos para después contarlos. Para esto vamos a precisar conocer el `taxon_rank` de cada observación, si es especie, género, familia, etc. Este dato no lo aporta la descarga de los datos, pero lo podemos obtener haciendo una llamada a la [API de iNaturalist](https://api.inaturalist.org/v1/docs/).  
+
+Para esto creamos la función `getiNatTaxonRank` y la usamos con el argumento `taxon_id`. La llamada a **taxa** en la API nos brinda información sobre el número de observaciones con las que cuenta el taxón (`observations_count`). Vamos a aprovechar a guardar también este valor para responder otras preguntas ;)
+
+
+```{r}
+#| label: get-iNat-taxon-rank-function
+#| code-fold: false
+
+getiNatTaxonRank <- function(taxon_id){
+  
+  taxaRanks <- tibble(taxon_name = character(),
+                      taxon_id = numeric(),
+                      taxon_rank = character(),
+                      observations_count = numeric())
+  
+  num_results = 0 # se usa para dormir la llamada a la API y para imprimir en consola el progreso
+  
+  for (taxon_id_i in taxon_id) {  
+    
+    if ((num_results %% 10) + 10 == 10) {
+      Sys.sleep(10) # Cada 10 consultas, el código para 10 segundos
+    }
+    
+    call_url <- str_glue('https://api.inaturalist.org/v1/taxa/',
+                         '{taxon_id_i}')
+    
+    get_json_call <- GET(url = call_url) %>%
+      content(as = "text") %>% fromJSON(flatten = TRUE)
+    
+    results <- as_tibble(get_json_call$results) 
+    
+    taxaRanks_i <- tibble(taxon_name = results$name,
+                          taxon_id = taxon_id_i,
+                          taxon_rank = results$rank,
+                          observations_count = results$observations_count)
+    
+    taxaRanks <- rbind(taxaRanks, taxaRanks_i)
+    num_results <- num_results + 1
+    cat(num_results, '\n')
+  }
+  return(taxaRanks)
+}
+```
+
+Para simplificar la llamada a la API, vamos a obtener la lista única de IDs (`taxa_list`). Luego corremos la función y finalmente unimos el resultado a nuestro conjunto de datos inicial para asignar a cada registro un valor de `taxon_rank` y `observations_count`. 
+
+```{r}
+#| label: get-iNat-taxon-rank-run
+#| code-fold: false
+#| eval: false
+
+taxa_list <- datos_GBS22 %>% 
+  filter(!is.na(taxon_id)) %>% 
+  distinct(taxon_id) %>% pull(taxon_id)
+
+taxonRank_GBS22 <- getiNatTaxonRank(taxa_list)
+# write_csv(taxonRank_GBS22, 'datos/taxonRank_GBS22.csv')
+
+datos_GBS22 <- left_join(datos_GBS22, taxonRank_GBS22 %>% 
+                           select(taxon_id, 
+                                  taxon_rank,
+                                  observations_count),
+                         by='taxon_id')
+```
+
+```{r}
+#| label: read-data-taxon-rank
+#| message: false
+#| warning: false
+#| echo: false
+
+taxonRank_GBS22 <- read_csv('datos/taxonRank_GBS22.csv')
+datos_GBS22 <- left_join(datos_GBS22, taxonRank_GBS22 %>% 
+                           select(taxon_id, 
+                                  taxon_rank,
+                                  observations_count),
+                         by='taxon_id')
+```
+
+Con este dato, vamos a poder filtrar los registros que están a nivel de especie para luego contarlos.
+
+```{r}
+#| label: num-species
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  distinct(taxon_species_name) %>% nrow()
+```
+
+#### ¿Qué grupos taxonómicos fueron más comunes? 
+  
+Los grupos más comunes serán aquellos con más observaciones. Pero, ¿a qué nivel queremos hacer el corte? ¿A nivel de reino, orden, clase, familia? Esta es una decisión que podemos tomar teniendo cuenta la distribución de los datos. Para hacerlo sencillo, vamos a usar el campo `iconic_taxon_name` que NaturalistaUY usa para representar sus datos.
+
+```{r}
+#| label: num-taxa
+
+datos_GBS22 %>% 
+  group_by(iconic_taxon_name) %>% 
+  count() %>% 
+  kable()
+```
+
+#### ¿Se registraron especies nuevas para Uruguay? y ¿para la plataforma?
+  
+Para saber si se registraron especies nuevas para Uruguay, podemos chequear si el `taxon_id` ya contaba con registros previos a la fecha de observación.
+
+Para saber si se registraron especies nuevas para iNaturalist en el marco de la Gran Biobúsqueda, vamos a hacer uso del campo `observations_count` que generamos en pasos anteriores. Si el taxa tiene 1 sólo registro, ¡entonces será una especie novedosa para la plataforma!
+
+```{r}
+#| label: novedosos-iNat
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(observations_count==1) %>% 
+  select(scientific_name)
+```
+
+Parece que no hay registros novedosos. Si probamos con que sea el segundo registro para la plataforma, encontramos algunas especies más
+
+```{r}
+#| label: novedosos-iNat-2
+
+datos_GBS22 %>% 
+  filter(observations_count==2) %>% 
+  select(scientific_name, taxon_kingdom_name, taxon_class_name) %>% 
+  kable()
+```
+
+
+#### ¿Se registraron especies amenazadas a nivel local o mundial?  
+
+Los datos que proporciona la plataforma sobre el estado de conservación de las especies son muy variados, desde estados globales (Lista Roja de la UICN), hasta clasificaciones nacionales o regionales. No hay una manera sencilla de extraer esta información, pero existe un paquete de R que nos puede a ayudar: `rredlist`. Usaremos la función `retrieveIUCNdata` creada por Biodiversidata para extraer estados de conservación.
+
+```{r}
+#| label: IUCN-function
+#| code-fold: false
+
+retrieveIUCNdata <- function(speciesList){
+  
+  IUCN_status <- tibble(species = character(),
+                        status = character(),
+                        trend = character())
+
+  for(sp in speciesList){
+    UICN_search <- rl_search(name = sp)
+    if (length(UICN_search$result) == 0){
+      IUCN_status_sp <- tibble(species = sp,
+                               status = 'NA',
+                               trend = 'NA')
+      IUCN_status <- rbind(IUCN_status, IUCN_status_sp)
+      cat(sp,'----- NOT FOUND\n')
+    }
+    else {
+      IUCN_status_sp <- tibble(species = UICN_search$result$scientific_name,
+                               status = UICN_search$result$category,
+                               trend = UICN_search$result$population_trend)
+      IUCN_status <- rbind(IUCN_status, IUCN_status_sp)
+      cat(sp,'----- DONE\n')
+    }
+  }
+  return(IUCN_status)
+}
+```
+  
+```{r}
+#| label: IUCN-data
+#| code-fold: false
+#| eval: false
+
+species_list <- datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  distinct(taxon_species_name) %>% pull(taxon_species_name)
+
+IUCNstatus_GBS22 <- retrieveIUCNdata(species_list)
+#write_csv(IUCNstatus_GBS22, 'datos/IUCNstatus_GBS22.csv')
+
+datos_GBS22 <- left_join(datos_GBS22, 
+                         IUCNstatus_GBS22 %>% 
+                           select(taxon_species_name=species), 
+                         by='taxon_species_name')
+```  
+
+```r
+Oenothera affinis ----- NOT FOUND
+Eryngium elegans ----- NOT FOUND
+Daucus pusillus ----- DONE
+Ginkgo biloba ----- DONE
+Neltuma affinis ----- NOT FOUND
+Aspidosperma quebracho-blanco ----- DONE
+Apis mellifera ----- NOT FOUND
+Euryops chrysanthemoides ----- NOT FOUND
+Camponotus mus ----- NOT FOUND
+Ipomoea indica ----- NOT FOUND
+Erythrolamprus poecilogyrus ----- DONE
+Argyranthemum frutescens ----- NOT FOUND
+Lobelia erinus ----- NOT FOUND
+Polygala myrtifolia ----- NOT FOUND
+Passiflora caerulea ----- NOT FOUND
+Eurata hilaris ----- NOT FOUND
+Senecio selloi ----- NOT FOUND
+Senecio crassiflorus ----- NOT FOUND
+Aglaonema commutatum ----- NOT FOUND
+Verbena montevidensis ----- NOT FOUND
+Hypoxis decumbens ----- NOT FOUND
+Eristalis tenax ----- NOT FOUND
+Asthenoctenus borellii ----- NOT FOUND
+Senecio angulatus ----- NOT FOUND
+Porcellio laevis ----- NOT FOUND
+Arachosia praesignis ----- NOT FOUND
+Euborellia annulipes ----- NOT FOUND
+Rumohra adiantiformis ----- DONE
+Tragia geraniifolia ----- NOT FOUND
+Calligrapha polyspila ----- NOT FOUND
+Plantago tomentosa ----- NOT FOUND
+Briza maxima ----- NOT FOUND
+Passer domesticus ----- DONE
+Ricinus communis ----- NOT FOUND
+Solanum laxum ----- NOT FOUND
+Edessa meditabunda ----- NOT FOUND
+Eriopis connexa ----- NOT FOUND
+Gymnetis chalcipes ----- NOT FOUND
+Ulmus minor ----- DONE
+Populus alba ----- DONE
+Manihot grahamii ----- NOT FOUND
+Solanum americanum ----- NOT FOUND
+Zantedeschia aethiopica ----- DONE
+Plantago major ----- DONE
+Myiophobus fasciatus ----- DONE
+Furnarius rufus ----- DONE
+Tetrapanax papyrifer ----- DONE
+Phimosus infuscatus ----- DONE
+Panicum racemosum ----- NOT FOUND
+...
+```
+
+```{r}
+#| label: read-data-IUCN-data
+#| message: false
+#| warning: false
+#| echo: false
+
+IUCNstatus_GBS22 <- read_csv('datos/IUCNstatus_GBS22.csv')
+datos_GBS22 <- left_join(datos_GBS22, 
+                         IUCNstatus_GBS22 %>% 
+                           rename(taxon_species_name=species), 
+                         by='taxon_species_name')
+```
+
+Muchas especies no han sido evaluadas por la IUCN, por lo que no tienen un estado de conservación. Ojo, también puede pasar que esté con otro nombre científico, ya que iNaturalist e IUCN no siempre manejan la misma taxonomía. En este caso, para simplificar, vamos a tener en cuenta sólo aquellas que la IUCN e iNat tienen en común.
+
+
+```{r}
+#| label: num-species-status
+
+datos_GBS22 %>% 
+    filter(taxon_rank=='species' & 
+             status %in% c('DD','NT','VU','EN','CR')) %>% 
+    distinct(taxon_species_name, .keep_all = T) %>%
+  select(taxon_species_name, status, trend) %>% kable()
+```
+
+
+### Departamentos
+#### ¿Cuáles fueron las especies más registradas en cada departamento? 
+
+Para esto, vamos a usar el campo `place_state_name`.
+
+```{r}
+#| label: species-per-state
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  group_by(place_state_name, taxon_species_name) %>% 
+  count() %>% 
+  group_by(place_state_name) %>% 
+  filter(n == max(n)) %>% kable()
+```
+
+#### ¿Coincide esto con tendencias previas?
+
+Para responder esto podemos ver los registros que hay para octubre (o en primavera) en cada departamento, teniendo en cuenta todos los datos, y compararlos con lo que encontramos en esta biobúsqueda.
+  
+### Observadores
+
+#### ¿Cuántas persona participaron de la biobúsqueda? 
+
+```{r}
+#| label: people-count
+#| code-fold: false
+
+datos_GBS22 %>% distinct(user_id) %>% nrow() 
+```
+
+#### ¿Cuántas especies registró cada persona?  
+
+Podemos hacer uso del campo `user_login` y contar la cantidad de especies (filtrando primero aquellas a nivel de especie). Mostramos las primeras 10 personas.
+
+```{r}
+#| label: species-per-person
+#| code-fold: false
+
+datos_GBS22 %>% 
+  filter(taxon_rank=='species') %>% 
+  group_by(user_login) %>%
+  summarise(n_species=n_distinct(taxon_species_name)) %>% 
+  head(n=10) %>% kable()
+```
+
+#### ¿Cuántas especies registraron en promedio lxs usuarixs?  
+
+```{r}
+#| label: mean-nspecies-per-person
+#| code-fold: false
+
+datos_GBS22 %>% 
+    filter(taxon_rank=='species') %>% 
+    group_by(user_login) %>%
+    summarise(n_species=n_distinct(taxon_species_name)) %>% 
+    mutate(mean_n_species=mean(n_species)) %>% 
+    select(mean_n_species) %>% head(1)
+```
+
+#### ¿Cuántas personas se unieron a iNat por este evento? 
+
+Para esto, precisamos saber la fecha a la que se reunió cada usuarie, para después saber si fue entre el 28 y el 31 de octubre de 2022.
+
+## Análisis espacial
+
+Para trabajar a nivel espacial vamos a descargar un mapa de Uruguay usando el paquete [`geouy`](https://github.com/RichDeto/geouy/blob/master/README.md).
+
+```{r}
+#| label: load-geouy-data
+#| code-fold: false
+#| message: false
+#| eval: false
+
+uruguay <- load_geouy('Deptos')
+```
+
+```{r}
+#| label: load-rds-data
+#| echo: false
+
+uruguay <- readRDS('datos/Uruguay.rds')
+```
+
+También, vamos a crear un objeto espacial a partir de nuestros datos de NaturalistaUY.
+
+```{r}
+#| label: spatial-data
+#| code-fold: false
+
+datos_GBS22_sf <- datos_GBS22 %>% 
+    st_as_sf(coords = c("longitude", "latitude")) %>% 
+    st_set_crs(4326) %>% 
+  st_transform(32721)
+```
+
+#### Datos por departamento
+
+Para esto podemos usar el campo `place_state_name`.
+
+```{r}
+#| label: por-departamento
+#| code-fold: false
+
+datos_GBS22 %>% 
+  group_by(place_state_name) %>%
+  count() %>%  
+  kable()
+```
+
+Podemos también mapear estos valores uniendo la capa de departamentos a los datos de NaturalistaUY y contando cuántos caen en cada departamento. Esto lo vamos a hacer con una unión espacial usando `st_join`.
+
+```{r}
+#| label: por-departamento-join
+#| code-fold: false
+#| message: false
+
+registros_por_departamento <- st_join(uruguay %>%
+                                        select(nombre),
+                                   datos_GBS22_sf) %>% 
+  group_by(nombre) %>% 
+  summarise(NR=ifelse(n_distinct(scientific_name, na.rm=T)!=0, n(), 0),
+            SR=ifelse(NR>0, n_distinct(scientific_name), 0)) %>% 
+  st_cast()
+```
+
+```{r}
+#| label: por-departamento-plot
+
+tm_graticules(alpha = 0.3) +
+    tm_shape(uruguay) +
+    tm_fill(col='grey97') +
+    tm_borders(col='grey80') +
+    tm_shape(registros_por_departamento) +
+    tm_fill('NR', alpha = 0.4, style = 'cat', palette = 'Purples')
+```
+
+¿Coincide esto con lo que vemos en el [proyecto paraguas](https://www.naturalista.uy/projects/gbs-2022-uruguay)?
+ 
+#### ¿Cuál es el porcentaje de datos con coordenadas oscurecidas?
+
+Por defecto, registros de especies sensibles son oscurecidos. Es importante saber eso, porque la posición geográfica no será la real.
+
+```{r}
+#| label: obscured
+#| code-fold: false
+
+datos_GBS22 %>% 
+    group_by(coordinates_obscured) %>% 
+    summarise(total=n(),
+              obscured=sum(coordinates_obscured)) %>% 
+    mutate(percent = obscured/sum(total)*100) %>% 
+    select(percent) %>% tail(1)
+```
+
+ 
+#### Datos en Áreas Protegidas
+
+Para saber cuántos registros fueron tomados dentro de cada área protegida, primero debemos leer la capa de áreas protegidas de Uruguay. Luego, tenemos que contar cuántos registros caen dentro de cada área.  
+
+```{r}
+#| label: areas-protegidas
+#| code-fold: false
+
+areas_protegidas <- read_sf('datos/areas_protegidas.gpkg') %>% 
+  st_transform(32721)
+
+registros_en_areas_protegidas <- st_join(areas_protegidas,
+                                   datos_GBS22_sf) %>% 
+  group_by(id_area, nombre) %>% 
+  summarise(NR=ifelse(n_distinct(scientific_name, na.rm=T)!=0, n(), 0),
+            SR=ifelse(NR>0, n_distinct(scientific_name), 0)) %>% 
+  st_cast()
+```
+
+Y ahora mapeamos usando tmap con la opción "view".
+
+```{r}
+#| label: mapa-areas-protegidas
+#| code-fold: false
+#| message: false
+
+tm_graticules(alpha = 0.3) +
+    tm_shape(uruguay, bbox=areas_protegidas) +
+    tm_fill(col='grey97') +
+    tm_borders(col='grey80') +
+    tm_shape(registros_en_areas_protegidas) +
+    tm_fill('NR', alpha = 0.4, style = 'cat', palette = 'RdPu')
+```
+
+#### ¿Podemos calcular la densidad de registros por área?
+
+Para esto tenemos que definir un tamaño de grilla y una extensión. Por ejemplo, como extensión podemos tomar todo el país y como tamaño de grilla 10x10 km. 
+
+```{r}
+#| label: grillas
+#| code-fold: false
+
+uruguay_grillas <- st_make_grid(st_union(uruguay),
+                                25000) %>%
+  st_intersection(st_union(uruguay)) %>% 
+  st_sf(gridID=1:length(.), geometry= .) %>% 
+  st_make_valid() %>% st_cast() 
+```
+
+Luego contamos cuántos registros por grilla hay, de la misma forma que hicimos para las áreas protegidas.
+
+```{r}
+#| label: mapa-de-grillas
+#| code-fold: false
+#| message: false
+
+grillas_GBS22 <- st_join(uruguay_grillas, datos_GBS22_sf) %>%
+  group_by(gridID) %>% 
+  summarise(NR=ifelse(n_distinct(scientific_name,
+                                 na.rm=T)!=0, n(), 0),
+            SR=ifelse(NR>0, n_distinct(scientific_name), 0)) %>% 
+  st_cast()
+
+```
+
+Y al final, mapeamos
+
+```{r}
+#| label: mapa-de-grillas-plot
+#| code-fold: false
+
+tm_graticules(alpha = 0.3) +
+    tm_shape(grillas_GBS22 %>% 
+                 mutate(NR=ifelse(NR==0, NA, NR))) +
+    tm_fill('NR', palette = 'Greens', 
+            legend.reverse = T,
+            n = 6, style='jenks',
+            textNA = "0", 
+            colorNA = "grey80") 
+```
+
+## Análisis temporal
+
+#### Intensidad por día
+
+```{r}
+#| label: temporal
+#| code-fold: false
+
+datos_GBS22 %>% 
+    add_count(iconic_taxon_name, hour=hour(time_observed_at), 
+              name='records_per_hour') %>% 
+    ggplot(., aes(x=as_datetime(time_observed_at), y=records_per_hour)) +
+    geom_line(show.legend = FALSE, linewidth=1) +
+    scale_x_datetime(breaks = '6 hours',
+                     date_labels="%d\n%H:%M") +
+    theme_bw()+
+    labs(x='', y= 'Number of records')
+```
+
+
+
