@@ -1,0 +1,170 @@
+---
+title: "Clase 1"
+author: "Juan M. Barreneche"
+format: 
+  revealjs:
+    self-contained: true
+    logo: 'img/hackathon_sticker.png'
+    auto-stretch: false
+    code-copy: true
+    code-tools: true
+    enter-title-slide: false
+    theme: [assets/monash.scss]
+    controls: true
+    width: 1280
+    height: 720
+    css: [assets/syntax-highlight.css, assets/custom.css, assets/pacman.css]
+    highlight-style: github
+    #preview-links: true
+editor: source
+---
+
+```{r, setup, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+# El Proyecto {background-color="#74ac00"}
+
+## Proyectos de trabajo (RStudio / Quarto)
+
+Proyecto en RStudio: la carpeta raíz es donde se guarda el archivo `[[nombre proyecto]].Rproj`, así como otras carpetas y archivos.
+
+Las rutas que usamos parten de esta raíz:
+
+::: incremental
+- `C:/Users/juan.barreneche/Documents/R/hackathon_CUZ2023/R/intro a R/clase1v0.1.R`
+- `R/intro a R/clase1v0.1.R`
+:::
+
+## Estructura de archivos y carpetas
+
+::: incremental
+-   Hackaton2023 /
+
+    -   `Hackaton.Rproj`
+
+    -   datos /
+
+        -   observations-382466.csv
+
+    -   R /
+
+        -   clase1.R
+
+        -   clase2.R
+
+    -   \*\*\[\[ ETC ... \]\]\*\*
+:::
+
+. . .
+
+::: footer
+
+[https://github.com/bienflorencia/hackathon_CUZ2023/blob/master/README.md](https://github.com/bienflorencia/hackathon_CUZ2023/blob/master/README.md)
+
+:::
+
+
+## Paquetes a usar
+
+```{r, paquetes}
+library(magrittr) # PIPE!
+library(readr)    # Importar archivos
+library(dplyr)    # Operaciones con data frames
+library(tibble)   # Data frames mejoradas
+```
+
+# Importar datos {background-color="#74ac00"}
+
+## Funciones `read*`[^1]
+
+[^1]: En el paquete [readr](https://readr.tidyverse.org/): `read_csv`, `read_csv2`, `read_delim`, `read_tsv`, ...
+
+```{r, importar-datos, message=FALSE}
+d <- read_csv("datos/observations-382466.csv")
+print(d)
+```
+
+## Funciones de exploración (básica)
+
+Se puede leer metadata de cada columna aquí: <https://www.naturalista.uy/observations/export> [^2]
+
+[^2]: Mouse sobre el nombre del campo: muestra una explicación sencilla
+
+Cada exportación tiene un número de ID ("flow_task_id). Ej: 382466
+
+[https://www.naturalista.uy/observations/export?flow_task_id=382466](https://www.naturalista.uy/observations/export?flow_task_id=376080)
+
+Algunas funciones útiles para ver lo importado:
+
+```{r, funciones-basicas, results="hide"}
+names(d) # Imprime los nombres de las columnas
+head(d, n = 2) # Muestra las primeras n filas
+summary(d) # Hace un resumen del objeto. Con data frames, hace 1 resumen x columna
+str(d) # Muestra la estructura del objeto
+```
+
+## Interfaz en RStudio
+
+Ambiente \> Importar dataset \> From ...
+
+# El ciclo del análisis
+
+## El ciclo del análisis
+
+::: incremental
+1.    Importar / limpiar datos (`read_csv`, `read.table`, ... / paquete `tidyr`, ...)
+2.    Funciones básicas (`names`, `head`, `summary`, `str`)
+3.    Responder preguntas específicas (conteos, promedios)
+4.    Visualizar la información (histogramas, gráficos de dispersión)
+5.    Comunicación (documentos, presentaciones)
+:::
+
+## Conteo
+
+``` {.r code-line-numbers="1|2"}
+?count
+count(x, …, wt = NULL, sort = FALSE, name = NULL)
+```
+
+## Contar grupos icónicos
+
+Ejemplo: "..." = **iconic_taxon_name**
+
+```{r}
+count(d, iconic_taxon_name) # Sin comillas!
+```
+
+
+
+\## TUBO / PIPE \-\-\--
+
+\# Lo mismo, pero con el "tubo" (pipe)...
+
+d %\>%
+
+count(iconic_taxon_name)
+
+\# NO SUBESTIMEN EL PODER DE LOS ATAJOS!
+
+\# %\>% = Ctrl+Shift+M
+
+\# Para qué queremos el tubo? Para enganchar sentencias de a una... facilita a ir
+
+\# construyendo el código de manera más o menos harmónica con el proceso mental:
+
+\# Ahora quiero ordenar de menos a más:
+
+d %\>%
+
+count(iconic_taxon_name) %\>%
+
+arrange(n)
+
+\# O al revés:
+
+d %\>%
+
+count(iconic_taxon_name) %\>%
+
+arrange(desc(n))

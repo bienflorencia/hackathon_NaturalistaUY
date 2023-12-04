@@ -1,9 +1,26 @@
 # Paquetes -----
 library(tidyverse)
 
+# Estructura de archivos:
+# 
+# Raíz /
+# 
+#   datos /
+#     observations-376080.csv.zip
+#     observations-376080.csv.zip
+#     
+#   R /
+#     clase1.R
+#     clase2.R
+#     
+#   [[nombre]].Rproj
+
+
+d <- read_csv("datos/observations-382466.csv")
+
 # Datos -------
 d <- read_csv(
-  "data/observations-376080.csv.zip",
+  "datos/observations-376080.csv.zip",
   col_types = cols(
     observed_on_string = col_skip(),
     observed_on = col_skip(),
@@ -92,7 +109,7 @@ spp <- c("Spp.B", "Spp.A", "Spp.B")
 table(spp)
 table(spp) %>% sort(decreasing = TRUE)
 spp_ordenada <- table(spp) %>% sort(decreasing = TRUE)
-spp_top <- names(spp_ordenada)[1]
+(spp_top <- names(spp_ordenada)[1])
 
 ## Una funcioncita ------
 get_spp_top <- function(spp) {

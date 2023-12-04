@@ -3,7 +3,7 @@ library(tidyverse)
 
 # Datos ----
 d <- read_csv(
-  "data/observations-376080.csv.zip",
+  "datos/observations-376080.csv.zip",
   col_types = cols(
     observed_on_string = col_skip(),
     observed_on = col_skip(),
