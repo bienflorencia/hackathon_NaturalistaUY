@@ -3,9 +3,9 @@
 
 # Ciencia comunitaria y NaturalistaUY
 
-Esta Hackathon es un minicurso propuesto para el [Congreso Uruguayo de Zoología](https://cuz.szu.org.uy) en diciembre 2023, pero que finalmente no pudo desarrollarse por razones ajenas a lxs organizadores.
+Esta Hackathon fue propuesta como un minicurso propuesto para el [Congreso Uruguayo de Zoología](https://cuz.szu.org.uy) (diciembre 2023), que finalmente no se hizo por razones ajenas a lxs organizadores.
 
-  - **Docentes**: Florencia Grattarola (responsable), Lucía Rodríguez-Tricot y Juan Manuel Barreneche.  
+  - **Organizadores**: Florencia Grattarola (responsable), Lucía Rodríguez-Tricot y Juan Manuel Barreneche.  
   - **Dirigido a**: interesados/as en el análisis de datos de biodiversidad con conocimiento básico de R.  
   - **Cupo**: 20 personas.  
   - **Requisitos**: laptop con [R y RStudio instalado](https://datacarpentry.org/R-ecology-lesson/index.html#install-r-and-rstudio).  
